@@ -3,10 +3,10 @@
 #include "prob.h"
 #include "umfpk.h"
 #include "time.h"
-#include "rho.h"
 #include "find_norm.h"
 #include "plot.h"
-#include "flux.h"
+#include "gs.h"
+
 
 /* Fonction main */
 
@@ -16,9 +16,9 @@ int main(int argc, char *argv[])
   char solver_type;
   int m;
   int n, *ia, *ja; 
-  double *a, *b, *x_direct;
+  double *a, *b, *x_direct,r;
   double tc1, tc2, tw1, tw2, relative_error; /* mis à jour le 13/10/22 */
-  m = 17;  // m doit etre de type 8n+1;
+  m = 9;  // m doit etre de type 8n+1;
   
   /* générér le problème */
   if (prob(m, &n, &ia, &ja, &a, &b))
@@ -35,14 +35,19 @@ int main(int argc, char *argv[])
         return 1;
   }
   
+  for(int q = 0; q < 10; q++){
+  r = forward_gauss_seidel(n,ia,ja,a,b,&x_direct);
+  printf("%f\n",r);
+	}
+  
   /* Pour les prints : 
    * ia: int j =0; j< m*m - ((m-1)/2 + 1) - ((m-1)/4 +1) - (m-1)*(m-1)*9/64 %d
    * ja: int j=0; j < 5*n - 4*m - 4; j++ %d
    * a : int j=0; j < 5*n - 4*m - 4; j++ %f*/
   
   // Print les matrices si besoin
-  int k = m*m - 4*m -1 - (m-1)*(m-1)*4/64;
-  
+  //int k = m*m - 4*m -1 - (m-1)*(m-1)*4/64;
+  /*
   FILE *f = NULL;
   f = fopen("ia.txt","w"); 
   for(int j=0; j< m*m - 4*m - (m-1)*(m-1)*4/64; j++){
@@ -67,6 +72,7 @@ int main(int argc, char *argv[])
   // SOLVEUR DIRECT
   /* résoudre et mesurer le temps de solution */
   
+  /*
   tc1 = mytimer_cpu(); tw1 = mytimer_wall(); 
   if( solve_umfpack(n, ia, ja, a, b, x_direct) )
      return 1;

@@ -11,8 +11,8 @@ LIB = $(L1) $(L2) $(L3) $(L4) $(L5) $(L6) $(L7) $(L8) -lm -lblas -llapack
 
  
 
-#COPT = -O3 -Wall 
-COPT = -g
+COPT = -O3 -Wall 
+#COPT = -g
 
 default: main
 
@@ -20,7 +20,7 @@ clean:
 	rm *.o 
 	rm main
 
-main: main.c prob.o time.o umfpack.o rho.o find_norm.o plot.o flux.o
+main: main.c prob.o time.o umfpack.o gs.o find_norm.o plot.o 
 	cc $(COPT) $^ -o $@ $(LIB)
 
 umfpack.o: umfpack.c
