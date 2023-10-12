@@ -85,6 +85,7 @@ int prob(int m, int *n, int **ia, int **ja, double **a, double **b)
 				next_ind++;
 				/* marquer le début de la ligne suivante dans le tableau 'ia' */
 				(*ia)[ind] = nnz;
+				(*b)[ind] = 0;
 				
 				/* (v) remplissage de la ligne : voisin sud */
 				if (iy == 1) { /* Condition Dirichlet u du bord sud */         
@@ -127,7 +128,7 @@ int prob(int m, int *n, int **ia, int **ja, double **a, double **b)
 				} 
 
 				/* remplissage de la ligne : voisin nord */
-				if (iy == m-2 && ix < (m-1)*5/8 || iy == (m-1)*5/8-1 && ix >= (m-1)*5/8) { /* condition Dirichlet u du bord nord */         
+				if ((iy == m-2 && ix < (m-1)*5/8) || (iy == (m-1)*5/8-1 && ix >= (m-1)*5/8)) { /* condition Dirichlet u du bord nord */         
 					(*b)[ind] += u(h*ix,h*(iy+1))*invh2;
 	
 				} else if ((ix <= (m-1)*5/8 && iy < m-1) || (ix > (m-1)*5/8 && iy < (m-1)*5/8) ) { /* reste des points */
