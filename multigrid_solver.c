@@ -44,11 +44,10 @@ double two_grid_method(int it,int n, int m,int* ia, int* ja, double* a, double* 
 		//Pre-smoothing
 		r = backward_gauss_seidel(n,ia,ja,a,b,&u_m);
 		
-		
 		// Création vecteur résidu 
 		residu_vector(n,ia,ja,a,b,u_m,&r_m);
 		fw_Restriction(m,n,m_c,n_c,r_m,&r_c);
-			
+
 		// Résolution du problème sur la coarsed grid
 		solve_umfpack(n_c,ia_c,ja_c,a_c,r_c,u_c);
 		
@@ -63,47 +62,40 @@ double two_grid_method(int it,int n, int m,int* ia, int* ja, double* a, double* 
 		}
 		
 		free(u_c); free(r_c); free(r_m);
+		
+	
 		return r;
 }
 
 
 void V_scheme(MultigridGrid* Grid, double** u_m){
-	int* ia = Grid->ia;
-	int* ja = Grid->ja;
-	double* a = Grid->a;
-	double* b = Grid->b;
-	int n = Grid->n;
-
 	MultigridGrid* Next_Grid = Grid->coarser;
-
-
-	if (Grid->isCoarsestGrid){
 	
-
+	if (Grid->isCoarsestGrid){
+	solve_umfpack(Grid->n, Grid->ia, Grid->ja, Grid->a, Grid->b,*u_m);
+	
 	} else {
+		double* u_c = (double*)calloc(Next_Grid->n,sizeof(double));
+		
 		// Appliquer le smoothing
-		backward_gauss_seidel(n,ia,ja,a,b,u_m);
+		backward_gauss_seidel(Grid->n,Grid->ia,Grid->ja,Grid->a,Grid->b,u_m);
+		residu_vector(Grid->n,Grid->ia,Grid->ja,Grid->a,Grid->b,(*u_m),&(Grid->residual));
 		
 		//Envoyer le résidu au bon endroit dans la prochaine grille (dans b pour la dernière dans r pour les autres) 
-		if (Grid->coarser != NULL && Next_Grid->isCoarsestGrid){
-			
-		residu_vector(n,ia,ja,a,b,(*u_m),&(Grid->residual));
-		fw_Restriction(Grid->m,Grid->n,Next_Grid->m,Next_Grid->n,Grid->residual,&(Next_Grid->residual));
+		fw_Restriction(Grid->m,Grid->n,Next_Grid->m,Next_Grid->n,Grid->residual,&(Next_Grid->b));
+
+		// Appliquer récursivement la fonction 
+		V_scheme(Next_Grid,&u_c);
 		
-		
-		}else{
-		//residu_vector(n,ia,ja,a,b,(*u_m),&r_m);
-		}
-		
+		// Prolonger la solution
+		Prolongation(Grid->m,Grid->n,Next_Grid->m,Next_Grid->n,u_c,u_m);
+
 		// Appliquer le post-smoothing
-		forward_gauss_seidel(n,ia,ja,a,b,u_m);
-		
-		
-		
+		forward_gauss_seidel(Grid->n,Grid->ia,Grid->ja,Grid->a,Grid->b,u_m);
+		free(u_c);
 	}
 	
 	return;
-	
 }
 
 
@@ -126,7 +118,7 @@ int V_multigrid(int m,int n, int it){
 	n2h = (m2h-2)*(m2h-2) - (m2h-1)*(m2h-1)*9/64;
 	double* r_2h = (double*)malloc(sizeof(double) * n2h);
 
-	intermediateGrid1 = fillMultigridGrid(m2h,n2h,1);
+	intermediateGrid1 = fillMultigridGrid(m2h,n2h,0);
 	intermediateGrid1->residual = r_2h;
 		
 	// G-4h 
@@ -165,11 +157,11 @@ int V_multigrid(int m,int n, int it){
 	
 			
 	// Commencer le V scheme
-	for(int i = 0; i<10;i++){
+	for(int i = 0; i<it;i++){
 	V_scheme(finestGrid,&u_m);
+	double r = residu(finestGrid->n,finestGrid->ia,finestGrid->ja,finestGrid->a,finestGrid->b,u_m);
+	printf("%e\n",r);
 	}
-	
-	
 	
 	/* Free les Grids */
 	freeMultigridHierarchy(finestGrid);
