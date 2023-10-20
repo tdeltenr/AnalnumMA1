@@ -9,6 +9,7 @@
 #include "multigrid_methods.h"
 #include "multigrid_solver.h"
 #include "multigrid.h"
+#include "CG_Methods.h"
 
 
 /* Fonction main */
@@ -21,24 +22,28 @@ int main(int argc, char *argv[])
   int n, *ia, *ja; 
   double *a, *b,*res,r;
   double tc1, tc2, tw1, tw2, relative_error; /* mis à jour le 13/10/22 */
-  m = 8*104+1;  // m doit etre de type 8n+1 avec n%2 == 0;
-  it = 100;
+  m = 801;  // m doit etre de type 8n+1 avec n%2(k-1) == 0;
+  it = 50;
   
   double* res_vector = malloc(it * sizeof(double)); 
   
   /* générér le problème */
   if (prob(m, &n, &ia, &ja, &a, &b))
      return 1;
-     	
+   
+  double* x_direct = calloc(n,sizeof(double)); 
+       	
   printf("\nPROBLEM: ");
   printf("m = %5d   n = %8d  nnz = %9d\n", m, n, ia[n] );
+
+  //CG_method(it,n,m,ia,ja,a,b,&x_direct);
   
-  //double* x_direct = (double*)malloc(n*sizeof(double));
-  //solve_umfpack(n, ia, ja, a, b, x_direct);
   //print_vector_double(n,x_direct);
+  printf("2-GRID\n");
+  two_grid_method(it,n,m,ia,ja,a,b,&res_vector);
   
-  //two_grid_method(it,n,m,ia,ja,a,b,&res_vector);
-  V_multigrid(m,n,it);
+  printf("Multi-Grid\n");
+  V_multigrid(m,n,it,&x_direct,&res_vector);
   //plot_2D_graphs(it,res_vector);
 
    //allouer la mémoire pour le vecteur de solution 

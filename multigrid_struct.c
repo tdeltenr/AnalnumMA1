@@ -8,8 +8,6 @@
 MultigridGrid* fillMultigridGrid(int m, int n, int isCoarsestGrid) {
     MultigridGrid* grid = (MultigridGrid*)malloc(sizeof(MultigridGrid));
 	
-	printf("m=%d\n",m);
-	
     // Declare pointers for ia, ja, a, and b
     int* ia;
     int* ja;

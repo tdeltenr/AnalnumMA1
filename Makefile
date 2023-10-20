@@ -20,7 +20,7 @@ clean:
 	rm *.o 
 	rm main
 
-main: main.c prob.o time.o umfpack.o gs.o find_norm.o plot.o multigrid_methods.o multigrid_struct.o multigrid_solver.o
+main: main.c prob.o time.o umfpack.o gs.o find_norm.o plot.o multigrid_methods.o multigrid_struct.o multigrid_solver.o CG_Methods.o
 	cc $(COPT) $^ -o $@ $(LIB)
 
 umfpack.o: umfpack.c

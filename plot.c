@@ -47,7 +47,7 @@ void plot_2D_graphs(int it, double* vector){
 	f = fopen("data.txt","w");
 	
 	for(int i = 0; i < it; i++){
-		fprintf(f, "%d %e \n ",i+1,vector[i]);
+		fprintf(f, "%d;%e \n ",i+1,vector[i]);
 	}
 	fclose(f);
 	system("gnuplot -p gnuplot.gp\\  ");
