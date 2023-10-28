@@ -8,7 +8,6 @@
 #include "gs.h"
 #include "multigrid_methods.h"
 #include "multigrid_solver.h"
-#include "multigrid.h"
 #include "CG_Methods.h"
 
 
@@ -22,8 +21,8 @@ int main(int argc, char *argv[])
   int n, *ia, *ja; 
   double *a, *b,*res,r;
   double tc1, tc2, tw1, tw2, relative_error; /* mis à jour le 13/10/22 */
-  m = 801;  // m doit etre de type 8n+1 avec n%2(k-1) == 0;
-  it = 50;
+  m = 1025; //1025;  // m doit etre de type 8n+1 avec n%2(k-1) == 0;
+  it = 20;
   
   double* res_vector = malloc(it * sizeof(double)); 
   
@@ -31,20 +30,24 @@ int main(int argc, char *argv[])
   if (prob(m, &n, &ia, &ja, &a, &b))
      return 1;
    
-  double* x_direct = calloc(n,sizeof(double)); 
+  double* x_CG = calloc(n,sizeof(double)); 
+  double* x_2G = calloc(n,sizeof(double)); 
+  double* x_MG = calloc(n,sizeof(double)); 
+  
        	
   printf("\nPROBLEM: ");
   printf("m = %5d   n = %8d  nnz = %9d\n", m, n, ia[n] );
-
-  //CG_method(it,n,m,ia,ja,a,b,&x_direct);
   
-  //print_vector_double(n,x_direct);
-  printf("2-GRID\n");
-  two_grid_method(it,n,m,ia,ja,a,b,&res_vector);
+  printf("Conjugate Gradient\n");
+  CG_method(it,n,m,ia,ja,a,b,&x_CG,4);
   
-  printf("Multi-Grid\n");
-  V_multigrid(m,n,it,&x_direct,&res_vector);
-  //plot_2D_graphs(it,res_vector);
+  //print_vector_double(n,x);
+  //printf("2-GRID\n");
+  //two_grid_method(it,n,m,ia,ja,a,b,&x_2G,&res_vector);
+  //print_vector_double(n,x);
+  
+  //printf("Multi-Grid\n");
+  //sW_multigrid(m,n,it,&x_MG,&res_vector,3);
 
    //allouer la mémoire pour le vecteur de solution 
   /*
@@ -77,48 +80,6 @@ int main(int argc, char *argv[])
    fw_Restriction(m, n, r_m, &r_c);
    Prolongation(m,n,m_c,n_c,u_c,&u_m);
 
-  
-  
- /*
-  for(int q = 0; q < 1; q++){
-  r = backward_gauss_seidel(n,ia,ja,a,b,&x_direct);
-  residu_vector(n,ia,ja,a,b,x_direct,&res);
-  norm(n,res);
-  fw_Restriction(m,n,res,&r_c);
-  norm(n_c,r_c);
-	}
-  free(res);
-  */
-  
-  /* Pour les prints : 
-   * ia: int j =0; j< m*m - ((m-1)/2 + 1) - ((m-1)/4 +1) - (m-1)*(m-1)*9/64 %d
-   * ja: int j=0; j < 5*n - 4*m - 4; j++ %d
-   * a : int j=0; j < 5*n - 4*m - 4; j++ %f*/
-  
-  // Print les matrices si besoin
-  //int k = m*m - 4*m -1 - (m-1)*(m-1)*4/64;
-  /*
-  FILE *f = NULL;
-  f = fopen("ia.txt","w"); 
-  for(int j=0; j< m*m - 4*m - (m-1)*(m-1)*4/64; j++){
-	  fprintf(f,"%d \n",ia[j]);
-  } 
-  fclose(f);
-  
-   FILE *g = NULL;
-  g = fopen("ja.txt","w"); 
-  for(int j=0; j<5*k - 4*(m-2); j++){
-	  fprintf(g,"%d \n",ja[j]);
-  } 
-  fclose(g);
-  
-   FILE *h = NULL;
-  h = fopen("a.txt","w"); 
-  for(int j=0;j<5*k - 4*(m-2); j++){
-	  fprintf(h,"%f \n",a[j]);
-  } 
-  fclose(h);
-  
   // SOLVEUR DIRECT
   /* résoudre et mesurer le temps de solution */
   
@@ -135,12 +96,8 @@ int main(int argc, char *argv[])
   printf("relative error [DIRECT] = %.16e \n", relative_error); 
   */
 
-  
-  //Plot le graphe
-  //plot(m,x_direct);
- 
   /* libérer la mémoire*/
-  free(ia); free(ja); free(a); free(b); free(res_vector);
+  free(ia); free(ja); free(a); free(b); free(res_vector); free(x_CG);free(x_MG);free(x_2G);
  
   return 0;
 }

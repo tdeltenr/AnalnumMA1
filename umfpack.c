@@ -2,6 +2,65 @@
 #include "umfpack.h"
 
 int solve_umfpack(int n, int *ia, int *ja, double *a, 
+                  double *b, double *x,double* Numeric)
+{	
+	int status;
+    double Info[UMFPACK_INFO], Control[UMFPACK_CONTROL];
+	
+	
+    /* solution */
+    /* status = umfpack_di_solve (UMFPACK_A, ia, ja, a, x, b, Numeric, Control, Info) ;*/
+    status = umfpack_di_solve (UMFPACK_At, ia, ja, a, x, b, Numeric, Control, Info) ;
+    /* UMFPACK utilise CSC et pas CSR =>  */
+    umfpack_di_report_info (Control, Info) ;
+    umfpack_di_report_status (Control, status) ;
+    if (status < 0){
+	printf("\n ERREUR : umfpack_di_solve a échoué\n\n");
+        return 1;
+    }
+
+return 0;
+}
+
+int factorize_umfpack(int n, int *ia, int *ja, double *a, double *b, double *x,void **NumericOut) {
+    int status;
+    double Info[UMFPACK_INFO], Control[UMFPACK_CONTROL];
+    void *Symbolic, *Numeric;
+
+    /* initialisation des paramètres par défaut */
+    umfpack_di_defaults(Control);
+
+    /* factorization symbolique */
+    status = umfpack_di_symbolic(n, n, ia, ja, a, &Symbolic, Control, Info);
+    
+    if (status < 0) {
+        umfpack_di_report_info(Control, Info);
+        umfpack_di_report_status(Control, status);
+        printf("\n ERREUR : umfpack_di_symbolic a échoué\n\n");
+        return 1;
+    }
+
+    /* factorization symbolique - affichage */
+    (void)umfpack_di_report_symbolic(Symbolic, Control);
+
+    /* factorization numérique */
+    status = umfpack_di_numeric(ia, ja, a, Symbolic, &Numeric, Control, Info);
+    
+    if (status < 0) {
+        umfpack_di_report_info(Control, Info);
+        umfpack_di_report_status(Control, status);
+        printf("\n ERREUR : umfpack_di_numeric a échoué\n\n");
+        return 1;
+    }
+
+    *NumericOut = Numeric;   // Renvoie Numeric
+	free(Symbolic);
+	
+	
+    return 0;
+}
+
+int proto_solve_umfpack(int n, int *ia, int *ja, double *a, 
                   double *b, double *x)
 /*
    But
@@ -80,5 +139,11 @@ int solve_umfpack(int n, int *ia, int *ja, double *a,
 	printf("\n ERREUR : umfpack_di_solve a échoué\n\n");
         return 1;
     }
+    umfpack_di_free_symbolic(&Symbolic);
+	umfpack_di_free_numeric(&Numeric);
+
 return 0;
 }
+
+
+

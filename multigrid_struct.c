@@ -41,9 +41,39 @@ MultigridGrid* fillMultigridGrid(int m, int n, int isCoarsestGrid) {
     free(a);
     free(b);
   
-   
-
     return grid;
+}
+
+
+MultigridGrid** CreateMultiGridHierarchy(int m, int n, int numLevels){
+	MultigridGrid** grids = (MultigridGrid**)malloc(sizeof(MultigridGrid*) * numLevels);
+	
+	// Rempli le niveau le plus fin de la grille
+	int mFinest = m;
+	int nFinest = n;
+	double* rFinest = (double*)calloc(n,sizeof(double));
+	grids[0] = fillMultigridGrid(mFinest, nFinest, 0);
+	grids[0]->residual = rFinest;
+	grids[0]->finer = NULL;
+
+	// Créez les niveaux de grille restants
+	for (int level = 1; level < numLevels; level++) {
+		int k = (mFinest - 1) / 8;
+		mFinest = k / 2 * 8 + 1;
+		nFinest = (mFinest - 2) * (mFinest - 2) - (mFinest - 1) * (mFinest - 1) * 9 / 64;
+		double* r = (double*)calloc(nFinest,sizeof(double));
+
+		grids[level] = fillMultigridGrid(mFinest, nFinest, 0);
+		grids[level]->residual = r;
+		grids[level]->finer = grids[level-1];
+		grids[level-1]->coarser = grids[level];
+	}
+
+	// Configurez la relation pour le niveau le plus grossier
+	grids[numLevels - 1]->coarser = NULL;
+	grids[numLevels - 1]->isCoarsestGrid = 1;
+	
+	return grids;
 }
 
 void freeMultigridHierarchy(MultigridGrid* grid) {
